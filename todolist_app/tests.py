@@ -36,15 +36,15 @@ class TodoViewsTestCase(TestCase):
     def test_todo_create(self):
         # Test creating a new Todo item
         url = reverse('todo-create')  # Use the correct endpoint
-        data = {'title': 'New Todo', 'description': 'Test Description'}
+        data = {'user': self.user.id ,'title': 'New Todo', 'description': 'Test Description', 'completed': 'false'}
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)  # Expect 201 Created
 
     def test_todo_update(self):
         # First create a Todo item to update
-        todo = Todo.objects.create(title='Initial Title', description='Initial Description', user=self.user)
+        todo = Todo.objects.create(user=self.user, title='Initial Title', description='Initial Description', completed = False)
         url = reverse('todo-update', kwargs={'pk': todo.id})
-        data = {'title': 'Updated Title', 'description': 'Updated Description'}
+        data = {'user': self.user.id ,'title': 'Updated Title', 'description': 'Updated Description', 'completed': 'true'}
         response = self.client.put(url, data, format='json')  # Use PUT for updates
         self.assertEqual(response.status_code, status.HTTP_200_OK)  # Expect 200 OK
 
