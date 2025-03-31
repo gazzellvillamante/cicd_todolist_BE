@@ -30,4 +30,4 @@ jobs:
         run: echo "DJANGO_TEST_ENV=True" >> $GITHUB_ENV
 
       - name: Run Django tests
-        run: python ./backend_to-do/ToDo/manage.py test  todo_app
+        run: python manage.py test
