@@ -30,4 +30,4 @@ jobs:
         run: echo "DJANGO_TEST_ENV=True" >> $GITHUB_ENV
 
       - name: Run Django tests
-        run: python manage.py test todolist_app.tests
+        run: python manage.py test todolist_app.tests --no-input
