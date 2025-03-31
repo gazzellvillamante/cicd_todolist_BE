@@ -21,17 +21,6 @@ class TodoViewsTestCase(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user, token=self.token)
 
-    def put(self, request, pk):
-        try:
-            todo = Todo.objects.get(pk=pk)
-        except Todo.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        serializer = TodoSerializer(todo, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def test_register(self):
         """Test the registration endpoint"""
