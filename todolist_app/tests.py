@@ -35,7 +35,7 @@ class TodoViewsTestCase(TestCase):
 
     def test_todo_create(self):
         # Test creating a new Todo item
-        url = '/api/todos/'  # Use the correct endpoint
+        url = 'api/todos/create/'  # Use the correct endpoint
         data = {
             'title': 'Test Todo',  # Ensure the correct fields are provided
             'description': 'This is a test Todo item',  # Adjust according to your model
@@ -48,7 +48,7 @@ class TodoViewsTestCase(TestCase):
     def test_todo_update(self):
         # First create a Todo item to update
         todo = Todo.objects.create(title='Initial Title', description='Initial Description', user=self.user)
-        url = f'/api/todos/{todo.id}/'  # Ensure the URL pattern matches the one in urls.py
+        url = f'api/todos/{todo.id}/update/'  # Ensure the URL pattern matches the one in urls.py
         data = {
             'title': 'Updated Title',
             'description': 'Updated Description',
