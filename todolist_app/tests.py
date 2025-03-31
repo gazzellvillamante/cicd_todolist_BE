@@ -1,78 +1,68 @@
 from django.test import TestCase
-from urllib import request
-
-from django.shortcuts import render
-
-from rest_framework import generics
+from django.urls import reverse
+from rest_framework import status
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.response import Response
+from todolist_app.models import Todo
 
-from todolist_app.serializer import UserSerializer
-from .models import Todo
-from todolist_app.serializer import TodoSerializer
+class TodoViewsTestCase(TestCase):
+    def setUp(self):
+        """Set up the test user and token"""
+        self.user = User.objects.create_user(username='testuser', password='password')
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
 
+    def test_register(self):
+        """Test the registration endpoint"""
+        url = reverse('register')  # Make sure the URL name is correct
+        data = {
+            'username': 'newuser',
+            'password': 'newpassword',
+            'email': 'newuser@example.com',
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-# Create your views here.
-class RegisterView(generics.CreateAPIView):
-    queryset = User.objects.all()
-    permission_classes = (AllowAny,)
-    serializer_class = UserSerializer
+    def test_todo_create(self):
+        """Test creating a new Todo item"""
+        url = reverse('todo-create')  # Make sure the URL name is correct
+        data = {
+            'title': 'Test Todo',
+            'description': 'This is a test todo',
+            'completed': False,
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-class LoginView(ObtainAuthToken):
-    def post(self, request, *args, **kwargs):
-        response = super(LoginView, self).post(request, *args, **kwargs)
-        token = Token.objects.get(key=response.data['token'])
-        return Response({'token': token.key, 'user_id': token.user_id})
+    def test_todo_list(self):
+        """Test listing Todo items"""
+        url = reverse('todo-list')  # Make sure the URL name is correct
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-class LogoutView(generics.GenericAPIView):
-    permission_classes = (IsAuthenticated,)
-    def post(self, request):
-        request.user.auth_token.delete()
-        return Response(status=200)
+    def test_todo_update(self):
+        """Test updating a Todo item"""
+        todo = Todo.objects.create(
+            user=self.user, title="Old Title", description="Old description", completed=False
+        )
+        url = reverse('todo-update', args=[todo.id])  # Ensure the URL name is correct
+        data = {
+            'title': 'Updated Title',
+            'description': 'Updated description',
+            'completed': True,
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        todo.refresh_from_db()
+        self.assertEqual(todo.title, 'Updated Title')
+        self.assertEqual(todo.description, 'Updated description')
 
-# Create Todo item
-class TodoCreateView(generics.CreateAPIView):
-    queryset = Todo.objects.all()
-    serializer_class = TodoSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
-# View Todo items (list and single view)
-class TodoListView(generics.ListAPIView):
-    queryset = Todo.objects.all()
-    serializer_class = TodoSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        return Todo.objects.filter(user=self.request.user)
-
-class TodoDetailView(generics.RetrieveAPIView):
-    queryset = Todo.objects.all()
-    serializer_class = TodoSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        return Todo.objects.filter(user=self.request.user)
-
-# Update Todo item
-class TodoUpdateView(generics.UpdateAPIView):
-    queryset = Todo.objects.all()
-    serializer_class = TodoSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        return Todo.objects.filter(user=self.request.user)
-
-# Delete Todo item
-class TodoDeleteView(generics.DestroyAPIView):
-    queryset = Todo.objects.all()
-    serializer_class = TodoSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def get_queryset(self):
-        return Todo.objects.filter(user=self.request.user)
+    def test_todo_delete(self):
+        """Test deleting a Todo item"""
+        todo = Todo.objects.create(
+            user=self.user, title="Test Title", description="Test description", completed=False
+        )
+        url = reverse('todo-delete', args=[todo.id])  # Ensure the URL name is correct
+        response = self.client.delete(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(Todo.objects.count(), 0)
