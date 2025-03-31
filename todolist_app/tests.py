@@ -4,13 +4,17 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from todolist_app.models import Todo
+from rest_framework.test import APIClient
 
 class TodoViewsTestCase(TestCase):
     def setUp(self):
-        """Set up the test user and token"""
+        # Create a user and an API token for authentication
         self.user = User.objects.create_user(username='testuser', password='password')
         self.token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
+
+        # Use the APIClient from DRF, which has the force_authenticate method
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user, token=self.token)
 
     def test_register(self):
         """Test the registration endpoint"""
