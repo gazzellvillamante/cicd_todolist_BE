@@ -3,8 +3,13 @@ from django.urls import reverse
 from rest_framework import status
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
+
 from todolist_app.models import Todo
 from rest_framework.test import APIClient
+
+from todolist_app.serializer import TodoSerializer
+
 
 class TodoViewsTestCase(TestCase):
     def setUp(self):
@@ -15,6 +20,18 @@ class TodoViewsTestCase(TestCase):
         # Use the APIClient from DRF, which has the force_authenticate method
         self.client = APIClient()
         self.client.force_authenticate(user=self.user, token=self.token)
+
+    def put(self, request, pk):
+        try:
+            todo = Todo.objects.get(pk=pk)
+        except Todo.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        serializer = TodoSerializer(todo, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def test_register(self):
         """Test the registration endpoint"""
@@ -40,15 +57,15 @@ class TodoViewsTestCase(TestCase):
         self.assertEqual(response.data['description'], 'This is a test Todo item')
 
     def test_todo_update(self):
-        # Create a Todo item first to update
+        # First create a Todo item to update
         todo = Todo.objects.create(title='Initial Title', description='Initial Description', user=self.user)
-        url = f'/api/todos/{todo.id}/'
+        url = f'/api/todos/{todo.id}/'  # Ensure the URL pattern matches the one in urls.py
         data = {
             'title': 'Updated Title',
             'description': 'Updated Description',
         }
-        response = self.client.put(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        response = self.client.put(url, data, format='json')  # Ensure PUT method is used
+        self.assertEqual(response.status_code, status.HTTP_200_OK)  # Expect 200 OK for successful update
         self.assertEqual(response.data['title'], 'Updated Title')
         self.assertEqual(response.data['description'], 'Updated Description')
 
