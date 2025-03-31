@@ -10,7 +10,7 @@ class TodoViewsTestCase(TestCase):
         """Set up the test user and token"""
         self.user = User.objects.create_user(username='testuser', password='password')
         self.token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Token {self.token.key}')
 
     def test_register(self):
         """Test the registration endpoint"""
